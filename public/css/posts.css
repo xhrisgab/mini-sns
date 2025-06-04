@@ -1,0 +1,16 @@
+.post {
+    box-sizing: border-box;
+    background-color: #e8f4fd;
+    border: 2px solid #34d0db;
+    padding: 20px;
+    width: 400px;
+    margin: 20px auto;
+    border-radius: 5px;
+}
+
+hr {
+    width: 400px;
+    margin: 20px auto;
+    border: 0;
+    border-top: 1px solid #ccc;
+}
