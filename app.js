@@ -32,7 +32,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get("/write", (req, res) => {
     if (req.session.username) {
-        res.sendFile(path.join(__dirname, "public", "write.html"));
+        res.render("write",);
     } else {
         res.redirect("/");
     }
