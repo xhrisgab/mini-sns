@@ -4,8 +4,10 @@ const path = require("path");
 const mongoose = require("mongoose");
 const morgan = require("morgan");
 const session = require("express-session");
+const bcrypt = require("bcrypt");
 
 const Feed = require("./model/feed");
+const User = require("./model/user");
 
 
 const app = express();
@@ -18,22 +20,6 @@ mongoose
     .then(() => console.log(chalk.bgHex("#b2ebf2").black.bold(" ⛅ MongoDB Connected ⛅ ")))
     .catch((err) => console.error("MongoDB Connection Error: ", err));
 
-/* // Sample code to create anew feed
-const sampleFeed = new Feed({
-    content: "This is my first SNS feed!",
-    author: "TEST_USER",
-}); 
-
-sampleFeed
-    .save()
-    .then(() => console.log("✅ Test fed saved"))
-    .then(() => {
-        Feed.find().then((feeds) => {
-            console.log(feeds);
-        });
-    })
-    .catch((err) => console.error("❌ Error:", err));
- */
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
@@ -49,7 +35,6 @@ app.use(session({
 
 app.get("/", (req, res) => {
     //res.sendFile(path.join(__dirname, "public", "index.html"));
-
     res.render("index", { username: req.session.username });
 });
 
@@ -102,17 +87,20 @@ app.get("/posts", async (req, res) => {
     }
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    //mock authentication login
-    const mockUsername = "xhris";
-    const mockPassword = "123456";
 
-    if (username === mockUsername && password === mockPassword) {
+    try {
+        const user = await User.findOne({ username });
+        if (!user || !(await bcrypt.compare(password, user.password))) {
+            return res.send("Invalid username or password!");
+        }
         req.session.username = username;
         res.redirect("/posts");
-    } else {
-        res.send("Login failed!");
+    } catch (err) {
+        console.error("Error during login: ", err);
+        res.status(500).send("Error during login!");
+
     }
 });
 
@@ -122,6 +110,100 @@ app.get("/logout", (req, res) => {
         res.clearCookie("connect.sid");
         res.redirect("/");
     });
+});
+
+app.get("/register", (req, res) => {
+    res.render("register",);
+});
+
+app.post("/register", async (req, res) => {
+    const { username, password, name } = req.body;
+
+    try {
+        const existUser = await User.findOne({ username });
+        if (existUser) {
+            return res.send("Username already exist");
+        }
+
+        const newUser = new User({ username, password, name });
+        await newUser.save();
+        res.redirect("/");
+    } catch (err) {
+        console.error("Error during register", err);
+        res.status(500).send("Error during reguister");
+
+    }
+});
+
+app.get("/friends/list", async (req, res) => {
+    if (!req.session.username) {
+        return res.redirect("/");
+    }
+    try {
+        const user = await User.findOne({ username: req.session.username });
+        res.render("friends", {
+            friends: user.friends,
+            findedfriends: []
+        });
+    } catch (err) {
+        console.error("Error fetching friends list:", err);
+        res.status(500).send("Error fetching friends list");
+    }
+});
+
+app.post("/friends/search", async (req, res) => {
+    const { friendUsername } = req.body;
+    if (!req.session.username) {
+        return res.redirect("/");
+    }
+    try {
+        // Se arc h for the logge d-in use r
+        const user = await User.findOne({
+            usernam: req.session.username
+        });
+        // Search for users whose username includes the search term
+        const findedfriends = await User.find({
+            $and: [
+                // includes search term
+                { username: { $regex: friendUsername, $options: "i" } },
+                // exclude already added friends and self
+                { username: { $nin: [...user.friends, user.username] } },
+            ],
+        });
+        res.render("friends", { friends: user.friends, findedfriends });
+    } catch (err) {
+        console.error("Error searching for friends:", err);
+        res.status(500).send("Error se arching for friends");
+    }
+});
+
+app.post("/friends/add", async (req, res) => {
+    const { friendUsername } = req.body;
+    if (!req.session.username) {
+        return res.redirect("/");
+    }
+    try {
+        const user = await User.findOne({
+            username:
+                req.session.username
+        });
+        const friend = await User.findOne({
+            username:
+                friendUsername
+        });
+        if (!friend) {
+            return res.send("User not found!");
+        }
+        if (user.friends.includes(friend.username)) {
+            return res.send("Already friends!");
+        }
+        user.friends.push(friend.username);
+        await user.save();
+        res.redirect("/friends/list");
+    } catch (err) {
+        console.error("Error adding friend:", err);
+        res.status(500).send("Error adding friend");
+    }
 });
 
 app.listen(3000, () => {
