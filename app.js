@@ -160,7 +160,6 @@ app.post("/friends/search", async (req, res) => {
         const user = await User.findOne({
             username: req.session.username
         });
-        console.log(user);
         // Search for users whose username includes the search term
         const findedfriends = await User.find({
             $and: [
@@ -170,7 +169,7 @@ app.post("/friends/search", async (req, res) => {
                 { username: { $nin: [...user.friends, user.username] } },
             ],
         });
-        console.log(findedfriends);
+        //console.log(findedfriends); //Usado para verificar los datos que llegaban de MongoDB
         res.render("friends", { friends: user.friends, findedfriends });
     } catch (err) {
         console.error("Error searching for friends:", err);
