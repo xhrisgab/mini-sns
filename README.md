@@ -41,5 +41,5 @@ node app.js
 - express-session (Session Management)
   - morgan (HTTP Request Logging)
 ## Author
-- **Name** : DongYeop Hwang
-- **Date** : 2025.05.10
+- **Name** : Gabo
+- **Date** : 2025.06.12
