@@ -100,7 +100,6 @@ app.post("/login", async (req, res) => {
     } catch (err) {
         console.error("Error during login: ", err);
         res.status(500).send("Error during login!");
-
     }
 });
 
@@ -159,8 +158,9 @@ app.post("/friends/search", async (req, res) => {
     try {
         // Se arc h for the logge d-in use r
         const user = await User.findOne({
-            usernam: req.session.username
+            username: req.session.username
         });
+        console.log(user);
         // Search for users whose username includes the search term
         const findedfriends = await User.find({
             $and: [
@@ -170,6 +170,7 @@ app.post("/friends/search", async (req, res) => {
                 { username: { $nin: [...user.friends, user.username] } },
             ],
         });
+        console.log(findedfriends);
         res.render("friends", { friends: user.friends, findedfriends });
     } catch (err) {
         console.error("Error searching for friends:", err);
