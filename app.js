@@ -77,13 +77,49 @@ app.get("/posts", async (req, res) => {
         return res.redirect("/");
     }
     try {
-        const posts = await Feed.find({ author: req.session.username }).sort({
-            createdAt: -1,
+        const user = await User.findOne({ username: req.session.username });
+
+        const feeds = await Feed.find({
+            author: { $in: [...user.friends, user.username] },
+        }).sort({
+            //createdAt: -1,
         }); // sort by createdAt in descending order.
+
+        // Add a field of isLiked to each feed
+        const posts = feeds.map((feed) => ({
+            ...feed.toObject(),
+            isLiked: feed.likes.includes(req.session.username), // true if there is a user who has clicked like button
+        }));
         res.render("posts", { posts });
     } catch (error) {
         console.error("Error loading posts", err);
         res.status(500).send("Error loading posts");
+    }
+});
+
+app.post("/posts/:uuid/like", async (req, res) => {
+    if (!req.session.username) {
+        return res.status(401).send("Unauthorized");
+    }
+    try {
+        const feed = await Feed.findOne({ uuid: req.params.uuid }); // Find feed by uuid
+        if (!feed) {
+            return res.status(404).send("Feed not found");
+        }
+        const username = req.session.username;
+        // Toggle like
+        if (feed.likes.includes(username)) {
+            // Remove like if already liked
+            feed.likes = feed.likes.filter((user) => user !== username);
+        } else {
+            // Add like if not already liked
+            feed.likes.push(username);
+        }
+        await feed.save();
+        res.json({ likesCount: feed.likes.length }); // Return updated likes count
+    } catch (err) {
+        console.error("Error toggling like:", err);
+        res.status(500).send("Error toggling like");
     }
 });
 

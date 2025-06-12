@@ -20,6 +20,7 @@ const feedSchema = new mongoose.Schema(
             type: Date,
             default: Date.now, // Automatically set to current time
         },
+        likes: [{ type: String }],
     },
     (this.collection = "feed")
 ); // Explicitly specify the collection name

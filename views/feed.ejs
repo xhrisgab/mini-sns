@@ -1,9 +1,19 @@
 <div class="post">
     <strong>
-        <%= feed.author %>
+        <%= post.author %>
     </strong><br />
     <span>
-        <%= feed.content %>
+        <%= post.content %>
+    </span>
+
+    <!-- Like  bu tton -->
+    <br />
+    <button class="like-button" data-id="<%= post.uuid %>" data-liked="<%= post.isLiked %>">
+        <%= post.isLiked ? "❤️" : "🤍" %>
+    </button>
+
+    <span class="likes-count">
+        <%= post.likes.length %> likes
     </span>
 
     <div class="comment-count">Comments (0)</div>

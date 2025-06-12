@@ -32,4 +32,33 @@ document.querySelectorAll(".post").forEach(function (post) {
             input.value = "";
         }
     });
+
+    // Add e ve nt liste ne r to th e  like  button
+    let likeButton = post.querySelector(".like-button");
+    let likesCountSpan = post.querySelector(".likes-count");
+    likeButton.addEventListener("click", async () => {
+        const postUuid = likeButton.dataset.id;
+        const isLiked = likeButton.dataset.liked === "true";
+        try {
+            const response = await fetch(`/posts/${postUuid}/like`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                likeButton.dataset.liked = (!isLiked).toString();
+                likeButton.textContent = !isLiked ? "❤️" : "🤍";
+                if (likesCountSpan) {
+                    likesCountSpan.textContent = `${data.likesCount} likes`;
+                }
+            } else {
+                console.error("Failed to toggle like ");
+            }
+        } catch (err) {
+            console.error("Error toggling like :", err);
+        }
+    });
+
 });
